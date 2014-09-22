@@ -61,25 +61,28 @@ unexport(Pin) ->
 	msg_relay_pid(?SERVERNAME, {unexport, self(), Pin}).
 
 set_pinmode(PinID, Mode) ->
-	msg_relay_pin(PinID, {set_pinmode, self(), PinID, Mode}).
+	msg_relay_pin(PinID, {set_pinmode, self(), Mode}).
+
+set_pinattr(PinID, Attr) ->
+	msg_relay_pin(PinID, {set_pinmode, self(), Attr}).
 
 get_pinmode(PinID) ->
-	msg_relay_pin(PinID, {get_pinmode, self(), PinID}).
+	msg_relay_pin(PinID, {get_pinmode, self()}).
 
 read_pin(PinID) ->
-	msg_relay_pin(PinID, {read_pin, self(), PinID}).
+	msg_relay_pin(PinID, {read_pin, self()}).
 
 write_pin(PinID, Value) ->
-	msg_relay_pin(PinID, {write_pin, self(), PinID, Value}).
+	msg_relay_pin(PinID, {write_pin, self(), Value}).
 
 watch_pin(PinID, Func) ->
-	msg_relay_pin(PinID, {watch_pin, self(), PinID, Func}).
+	msg_relay_pin(PinID, {watch_pin, self(), Func}).
 
 unwatch_pin(PinID) ->
-	msg_relay_pin(PinID, {unwatch_pin, self(), PinID}).
+	msg_relay_pin(PinID, {unwatch_pin, self()}).
 
 status(PinID) ->
-	msg_relay_pin(PinID, {status, self(), PinID}).
+	msg_relay_pin(PinID, {status, self()}).
 
 status() ->
 	?SERVERNAME ! {getmap, self()},
