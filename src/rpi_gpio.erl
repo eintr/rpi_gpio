@@ -61,10 +61,10 @@ unexport(Pin) ->
 	msg_relay_pid(?SERVERNAME, {unexport, self(), Pin}).
 
 set_pinmode(PinID, Mode) ->
-	msg_relay_pin(PinID, {set_pinmode, self(), Mode}).
+	msg_relay_pin(PinID, {change_mode, self(), Mode}).
 
 set_pinattr(PinID, Attr) ->
-	msg_relay_pin(PinID, {set_pinmode, self(), Attr}).
+	msg_relay_pin(PinID, {change_attr, self(), Attr}).
 
 get_pinmode(PinID) ->
 	msg_relay_pin(PinID, {get_pinmode, self()}).
@@ -73,7 +73,7 @@ read_pin(PinID) ->
 	msg_relay_pin(PinID, {read_pin, self()}).
 
 write_pin(PinID, Value) ->
-	msg_relay_pin(PinID, {write_pin, self(), Value}).
+	msg_relay_pin(PinID, {set_value, self(), Value}).
 
 watch_pin(PinID, Func) ->
 	msg_relay_pin(PinID, {watch_pin, self(), Func}).

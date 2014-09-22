@@ -68,9 +68,11 @@ export(Pin) ->
 unexport(Pin) ->
 	file:write_file(?GPIO_PREFIX++"unexport", integer_to_list(Pin)).
 
+%%% bear loop
 pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) ->
 	receive
 		{set_value, From, OldValue} ->
+			io:format("Pin[~p]: {set_value, ~p}\n", [Pin, OldValue]),
 			case maps:find(direction, Attr) of
 				{ok, in} ->
 					From ! {error, "pin was defined input."};
@@ -81,6 +83,7 @@ pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) -
 			end,
 			pin_loop(Pin, Context);
 		{set_value, From, Value} ->
+			io:format("Pin[~p]: {set_value, ~p}\n", [Pin, Value]),
 			case maps:find(direction, Attr) of
 				{ok, in} ->
 					From ! {error, "pin was defined input."};
@@ -92,14 +95,29 @@ pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) -
 					From ! {error, "Unknown error: No 'direction' value for pin."}
 			end,
 			pin_loop(Pin, Context);
+		{change_attr, From, NewAttr} ->
+			io:format("Pin[~p]: {change_attr, ~p}\n", [Pin, NewAttr]),
+			From ! ok,      % BUG: Racing!
+			pin_loop(Pin, #pin_context{mode=bare, attribute=update_attr(Attr, NewAttr), value=OldValue});
+		{change_mode, From, NewMode} ->
+			io:format("Pin[~p]: {change_mode, ~p}\n", [Pin, NewMode]),
+			set_pinvalue(Pin, 0),
+			From ! ok,	% BUG: Racing!
+			pin_loop(Pin, #pin_context{mode=NewMode, attribute=Attr, value=0});
 		{change_mode, From, NewMode, NewAttr} ->
+			io:format("Pin[~p]: {change_mode, ~p, ~p}\n", [Pin, NewMode, NewAttr]),
 			set_pinvalue(Pin, 0),
 			From ! ok,	% BUG: Racing!
 			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Attr, NewAttr), value=0});
+		{'EXIT', From} ->
+			From ! {error, "Function not implemented yet."},
+			exit("NoRespawn");
 		{_, From} ->
 			From ! {error, "Function not implemented yet."},
 			pin_loop(Pin, Context)
 	end;
+
+%%% PWM loop
 pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=0}) ->
 	{ok, T0} = maps:find(time0, Attr),
 	receive
@@ -123,6 +141,7 @@ pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=1}) ->
 		pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=0})
 	end;
 
+%%% Dumb loop
 pin_loop(Pin, #pin_context{mode=_, attribute=_, value=_}=Context) ->
 	receive
 		{_, From} ->
