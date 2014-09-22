@@ -61,15 +61,12 @@ init_pin_attribute(_, over, Result) ->
 	Result.
 
 export(Pin) ->
-    {ok, IO} = file:open(?GPIO_PREFIX++"export", [write]),
-    io:format(IO, "~p~n", [Pin]),
+	file:write_file(?GPIO_PREFIX++"export", integer_to_list(Pin)),
 	{Pin, PID} = init_pin_path(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)),
 	PID.
 
 unexport(Pin) ->
-	IO = file:open(?GPIO_PREFIX++"unexport", [write]),
-	io:format(IO, "~p~n", [Pin]),
-	ok.
+	file:write_file(?GPIO_PREFIX++"unexport", integer_to_list(Pin)).
 
 pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) ->
 	receive
