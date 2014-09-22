@@ -143,9 +143,10 @@ set_pinvalue(Pin, Value) ->
 	io:format(IO, "~p~n", [Value]).
 
 cat_file(Path, Converter) ->
-	{ok, Io}=file:open(Path, [read, binary]),
-	{ok, LineBin} = file:read_line(Io),
-	{ok, Converter(LineBin)}.
+	Io=file:open(Path, [read]),
+	{ok, Line} = file:read_line(Io),
+	[H|_] = string:tokens(Line, " \n"),
+	{ok, Converter(list_to_binary(H))}.
 
 utf8bin_to_atom(B) ->
 	binary_to_atom(B, utf8).
