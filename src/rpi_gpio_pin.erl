@@ -143,7 +143,7 @@ set_pinvalue(Pin, Value) ->
 	io:format(IO, "~p~n", [Value]).
 
 cat_file(Path, Converter) ->
-	Io=file:open(Path, [read, binary]),
+	{ok, Io}=file:open(Path, [read, binary]),
 	{ok, LineBin} = file:read_line(Io),
 	{ok, Converter(LineBin)}.
 
