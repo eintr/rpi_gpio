@@ -31,7 +31,7 @@ init_pin_path(?GPIO_PREFIX++"gpio"++Tail=Path) ->
 	{list_to_integer(Tail), spawn(?MODULE, pin_loop, [list_to_integer(Tail), init_pin_context(Path)])}.
 
 init_pin_context(Dir) ->
-	#pin_context{mode=bare, attribute=init_pin_attribute(Dir, maps:new()), value=cat_file(Dir++"value", fun binary_to_integer/1)}.
+	#pin_context{mode=bare, attribute=init_pin_attribute(Dir, maps:new()), value=cat_file(Dir++"/value", fun binary_to_integer/1)}.
 
 init_pin_attribute(Path, Result) ->
 	init_pin_attribute(Path, direction, Result).
@@ -61,7 +61,7 @@ init_pin_attribute(_, over, Result) ->
 	Result.
 
 export(Pin) ->
-    IO = file:open(?GPIO_PREFIX++"export", [write]),
+    {ok, IO} = file:open(?GPIO_PREFIX++"export", [write]),
     io:format(IO, "~p~n", [Pin]),
 	{Pin, PID} = init_pin_path(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)),
 	PID.
@@ -139,11 +139,11 @@ update_attr(Map, [{K, V}|T]) ->
 	update_attr(maps:put(K, V, Map), T).
 
 set_pinvalue(Pin, Value) ->
-	IO = file:open(?GPIO_PREFIX++"gpio"++integer_to_list(Pin), [write]),
+	{ok, IO} = file:open(?GPIO_PREFIX++"gpio"++integer_to_list(Pin), [write]),
 	io:format(IO, "~p~n", [Value]).
 
 cat_file(Path, Converter) ->
-	Io=file:open(Path, [read]),
+	{ok, Io} =file:open(Path, [read]),
 	{ok, Line} = file:read_line(Io),
 	[H|_] = string:tokens(Line, " \n"),
 	{ok, Converter(list_to_binary(H))}.
