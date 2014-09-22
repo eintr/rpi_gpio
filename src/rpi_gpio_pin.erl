@@ -109,6 +109,9 @@ pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) -
 			set_pinvalue(Pin, 0),
 			From ! ok,	% BUG: Racing!
 			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Attr, NewAttr), value=0});
+		{status, From} ->
+			From ! Context,
+			pin_loop(Pin, Context);
 		{'EXIT', From} ->
 			From ! {error, "Function not implemented yet."},
 			exit("NoRespawn");
