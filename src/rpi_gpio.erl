@@ -4,7 +4,7 @@
 
 -define(SERVERNAME, gpio_server).
 
--export([init/0, set_pinmode/2, get_pinmode/1, read_pin/1, write_pin/2, watch_pin/2, unwatch_pin/1, status/1, status/0]).
+-export([init/0, export/1, unexport/1, set_pinmode/2, get_pinmode/1, read_pin/1, write_pin/2, watch_pin/2, unwatch_pin/1, status/1, status/0]).
 
 -export([server_start/0]).
 
@@ -17,7 +17,7 @@ init() ->
 	end.
 
 server_start() ->
-	server_loop(rpi_gpio_pin:init_pins()).
+	server_loop(rpi_gpio_pin:init_allpins()).
 
 server_loop(PinPIDMap) ->
 	receive
@@ -30,6 +30,19 @@ server_loop(PinPIDMap) ->
 		{get, From, PinID} ->
 			From ! maps:find(PinID, PinPIDMap),
 			server_loop(PinPIDMap);
+		{export, From, PinID} ->
+			case rpi_gpio_pin:export(PinID) of
+				{error, Reason} ->
+					From ! {error, Reason};
+				PID ->
+					From ! PID,
+					server_loop(maps:put(PinID, PID, PinPIDMap))
+			end;
+		{unexport, From, PinID} ->
+			case rpi_gpio_pin:unexport(PinID) of
+				Ret ->
+					From ! {error, Ret}
+			end;
 		{getmap, From} ->
 			From ! PinPIDMap,
 			server_loop(PinPIDMap);
@@ -40,6 +53,12 @@ server_loop(PinPIDMap) ->
 
 pid_to_pin(PID, PinPIDMap) ->
 	maps:fold(fun (K, P, P) -> K;(_,_,AccIn) ->AccIn end, PID, PinPIDMap).
+
+export(Pin) ->
+	msg_relay_pid(?SERVERNAME, {export, self(), Pin}).
+
+unexport(Pin) ->
+	msg_relay_pid(?SERVERNAME, {unexport, self(), Pin}).
 
 set_pinmode(PinID, Mode) ->
 	msg_relay_pin(PinID, {set_pinmode, self(), PinID, Mode}).
