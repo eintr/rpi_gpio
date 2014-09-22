@@ -92,7 +92,7 @@ status() ->
 	end.
 
 msg_relay_pin(PinID, Msg) ->
-	?SERVERNAME ! {get, PinID},
+	?SERVERNAME ! {get, self(), PinID},
 	receive
 		{ok, PID} ->
 			msg_relay_pid(PID, Msg);
