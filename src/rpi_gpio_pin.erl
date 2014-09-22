@@ -28,7 +28,7 @@ init_pin(PinID) ->
 	init_pin_path(?GPIO_PREFIX++"gpio"++integer_to_list(PinID)).
 
 init_pin_path(?GPIO_PREFIX++"gpio"++Tail=Path) ->
-	{binary_to_integer(Tail), spawn(?MODULE, pin_loop, [binary_to_integer(Tail), init_pin_context(Path)])}.
+	{list_to_integer(Tail), spawn(?MODULE, pin_loop, [list_to_integer(Tail), init_pin_context(Path)])}.
 
 init_pin_context(Dir) ->
 	#pin_context{mode=bare, attribute=init_pin_attribute(Dir, maps:new()), value=cat_file(Dir++"value", fun binary_to_integer/1)}.
