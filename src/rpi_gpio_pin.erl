@@ -139,7 +139,7 @@ update_attr(Map, [{K, V}|T]) ->
 	update_attr(maps:put(K, V, Map), T).
 
 set_pinvalue(Pin, Value) ->
-	{ok, IO} = file:open(?GPIO_PREFIX++"gpio"++integer_to_list(Pin), [write]),
+	{ok, IO} = file:open(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/value", [write]),
 	io:format(IO, "~p~n", [Value]).
 
 cat_file(Path, Converter) ->
