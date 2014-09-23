@@ -109,36 +109,36 @@ pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) -
 			set_pinvalue(Pin, 0),
 			From ! ok,	% BUG: Racing!
 			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Attr, NewAttr), value=0});
-		{status, From} ->
-			From ! Context,
-			pin_loop(Pin, Context);
-		{'EXIT', From} ->
-			From ! {error, "Function not implemented yet."},
-			exit("NoRespawn");
-		{_, From} ->
-			From ! {error, "Function not implemented yet."},
+		CommonMsg ->
+			pin_loop_common_msg_handle(Pin, Context, CommonMsg),
 			pin_loop(Pin, Context)
 	end;
 
 %%% PWM loop
-pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=0}) ->
+pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=0}=Context) ->
 	{ok, T0} = maps:find(time0, Attr),
 	receive
 		{change_mode, From, NewMode, NewAttr} ->
 			set_pinvalue(Pin, 0),
 			From ! ok,	% BUG: Racing!
-			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Attr, NewAttr), value=0})
+			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Attr, NewAttr), value=0});
+		CommonMsg ->
+			pin_loop_common_msg_handle(Pin, Context, CommonMsg),
+			pin_loop(Pin, Context)
 	after T0 ->
 		set_pinvalue(Pin, 1),
 		pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=1})
 	end;
-pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=1}) ->
+pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=1}=Context) ->
 	{ok, T1} = maps:find(time1, Attr),
 	receive
 		{change_mode, From, NewMode, NewAttr} ->
 			set_pinvalue(Pin, 0),
 			From ! ok,	% BUG: Racing!
-			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Attr, NewAttr), value=0})
+			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Attr, NewAttr), value=0});
+		CommonMsg ->
+			pin_loop_common_msg_handle(Pin, Context, CommonMsg),
+			pin_loop(Pin, Context)
 	after T1 ->
 		set_pinvalue(Pin, 0),
 		pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=0})
@@ -152,6 +152,17 @@ pin_loop(Pin, #pin_context{mode=_, attribute=_, value=_}=Context) ->
 			pin_loop(Pin, Context)
 	end.
 
+pin_loop_common_msg_handle(_Pin, Context, Msg) ->
+	case Msg of
+		{'EXIT', From} ->
+			From ! {error, "Function not implemented yet."},
+			exit("NoRespawn");
+		{status, From} ->
+			From ! Context;
+		{Code, From} ->
+			From ! {error, "Can't understand messasge code: "++atom_to_list(Code)}
+	end.
+
 update_attr(Map, []) ->
 	Map;
 update_attr(Map, [{K, V}|T]) ->
@@ -162,9 +173,8 @@ set_pinvalue(Pin, Value) ->
 	io:format(IO, "~p~n", [Value]).
 
 cat_file(Path, Converter) ->
-	{ok, Io} =file:open(Path, [read]),
-	{ok, Line} = file:read_line(Io),
-	[H|_] = string:tokens(Line, " \n"),
+	{ok, LineBin} = file:read_file(Path),
+	[H|_] = string:tokens(binary_to_list(LineBin), " \n"),
 	{ok, Converter(list_to_binary(H))}.
 
 utf8bin_to_atom(B) ->
