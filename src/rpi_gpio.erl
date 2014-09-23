@@ -4,7 +4,7 @@
 
 -define(SERVERNAME, gpio_server).
 
--export([init/0, export/1, unexport/1, set_pinmode/2, set_pinattr/2, get_pinmode/1, read_pin/1, write_pin/2, watch_pin/2, unwatch_pin/1, status/1, status/0]).
+-export([init/0, export/1, unexport/1, set_pinmode/2, set_pinmode/3, set_pinattr/2, get_pinmode/1, read_pin/1, write_pin/2, watch_pin/2, unwatch_pin/1, status/1, status/0]).
 
 -export([server_start/0]).
 
@@ -62,6 +62,9 @@ unexport(Pin) ->
 
 set_pinmode(PinID, Mode) ->
 	msg_relay_pin(PinID, {change_mode, self(), Mode}).
+
+set_pinmode(PinID, Mode, Attr) ->
+	msg_relay_pin(PinID, {change_mode, self(), Mode, Attr}).
 
 set_pinattr(PinID, Attr) ->
 	msg_relay_pin(PinID, {change_attr, self(), Attr}).
