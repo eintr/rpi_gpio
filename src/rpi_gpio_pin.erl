@@ -4,7 +4,7 @@
 
 -export([init_allpins/0, init_pin/1, export/1, unexport/1]).
 
--export([pin_loop/2]).
+-export([pin_loop_start/2]).
 
 -define(GPIO_PREFIX, "/sys/class/gpio/").
 
@@ -28,7 +28,7 @@ init_pin(PinID) ->
 	init_pin_path(?GPIO_PREFIX++"gpio"++integer_to_list(PinID)).
 
 init_pin_path(?GPIO_PREFIX++"gpio"++Tail=Path) ->
-	{list_to_integer(Tail), spawn(?MODULE, pin_loop, [list_to_integer(Tail), init_pin_context(Path)])}.
+	{list_to_integer(Tail), spawn(?MODULE, pin_loop_start, [list_to_integer(Tail), init_pin_context(Path)])}.
 
 init_pin_context(Dir) ->
 	#pin_context{mode=bare, attribute=init_pin_attribute(Dir, maps:new()), value=cat_file(Dir++"/value", fun binary_to_integer/1)}.
@@ -67,6 +67,10 @@ export(Pin) ->
 
 unexport(Pin) ->
 	file:write_file(?GPIO_PREFIX++"unexport", integer_to_list(Pin)).
+
+pin_loop_start(Pin, Context) ->
+	process_flag(priority, high),
+	pin_loop(Pin, Context).
 
 %%% bear loop
 pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) ->
