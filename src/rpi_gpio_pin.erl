@@ -102,7 +102,7 @@ pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) -
 		{change_attr, From, NewAttr} ->
 			io:format("Pin[~p]: {change_attr, ~p}\n", [Pin, NewAttr]),
 			From ! ok,      % BUG: Racing!
-			pin_loop(Pin, #pin_context{mode=bare, attribute=update_attr(Attr, NewAttr), value=OldValue});
+			pin_loop(Pin, #pin_context{mode=bare, attribute=update_attr(Pin, Attr, NewAttr), value=OldValue});
 		{change_mode, From, NewMode} ->
 			io:format("Pin[~p]: {change_mode, ~p}\n", [Pin, NewMode]),
 			set_pinvalue(Pin, 0),
@@ -112,7 +112,7 @@ pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) -
 			io:format("Pin[~p]: {change_mode, ~p, ~p}\n", [Pin, NewMode, NewAttr]),
 			set_pinvalue(Pin, 0),
 			From ! ok,	% BUG: Racing!
-			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Attr, NewAttr), value=0});
+			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Pin, Attr, NewAttr), value=0});
 		CommonMsg ->
 			pin_loop_common_msg_handle(Pin, Context, CommonMsg),
 			pin_loop(Pin, Context)
@@ -125,7 +125,7 @@ pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=0}=Context) ->
 		{change_mode, From, NewMode, NewAttr} ->
 			set_pinvalue(Pin, 0),
 			From ! ok,	% BUG: Racing!
-			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Attr, NewAttr), value=0});
+			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Pin, Attr, NewAttr), value=0});
 		CommonMsg ->
 			pin_loop_common_msg_handle(Pin, Context, CommonMsg),
 			pin_loop(Pin, Context)
@@ -139,7 +139,7 @@ pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=1}=Context) ->
 		{change_mode, From, NewMode, NewAttr} ->
 			set_pinvalue(Pin, 0),
 			From ! ok,	% BUG: Racing!
-			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Attr, NewAttr), value=0});
+			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Pin, Attr, NewAttr), value=0});
 		CommonMsg ->
 			pin_loop_common_msg_handle(Pin, Context, CommonMsg),
 			pin_loop(Pin, Context)
@@ -167,10 +167,17 @@ pin_loop_common_msg_handle(_Pin, Context, Msg) ->
 			From ! {error, "Can't understand messasge code: "++atom_to_list(Code)}
 	end.
 
-update_attr(Map, []) ->
-	Map;
-update_attr(Map, [{K, V}|T]) ->
-	update_attr(maps:put(K, V, Map), T).
+update_attr(Pin, Map, []) ->
+	maps:fold(fun set_pinattrs/3, maps:put(pin_num, Pin, maps:new()), Map);
+update_attr(Pin, Map, [{K, V}|T]) ->
+	update_attr(Pin, maps:put(K, V, Map), T).
+
+set_pinattrs(K, V, AccIn) when is_integer(V)->
+	file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(maps:get(pin_num, AccIn))++atom_to_list(K), integer_to_list(V)),
+	maps:put(K, V, AccIn);
+set_pinattrs(K, V, AccIn) when is_atom(V)->
+	file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(maps:get(pin_num, AccIn))++atom_to_list(K), atom_to_list(V)),
+	maps:put(K, V, AccIn).
 
 set_pinvalue(Pin, 0) ->
 	ok = file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/value", "0");
