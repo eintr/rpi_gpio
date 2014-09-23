@@ -10,7 +10,8 @@
 
 -record( pin_context, {
 		mode = bare,
-		attribute, % is a map
+		attribute, % is a map of gpio[0-9]*/.*
+		config,
 		value
 	}
 ).
@@ -31,7 +32,7 @@ init_pin_path(?GPIO_PREFIX++"gpio"++Tail=Path) ->
 	{list_to_integer(Tail), spawn(?MODULE, pin_loop_start, [list_to_integer(Tail), init_pin_context(Path)])}.
 
 init_pin_context(Dir) ->
-	#pin_context{mode=bare, attribute=init_pin_attribute(Dir, maps:new()), value=cat_file(Dir++"/value", fun binary_to_integer/1)}.
+	#pin_context{mode=bare, attribute=init_pin_attribute(Dir, maps:new()), config=maps:new(), value=cat_file(Dir++"/value", fun binary_to_integer/1)}.
 
 init_pin_attribute(Path, Result) ->
 	init_pin_attribute(Path, direction, Result).
@@ -117,8 +118,8 @@ pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) -
 	end;
 
 %%% PWM loop
-pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=0}=Context) ->
-	{ok, T0} = maps:find(time0, Attr),
+pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, config=Conf, value=0}=Context) ->
+	{ok, T0} = maps:find(time0, Conf),
 	receive
 		{change_mode, From, NewMode, NewAttr} ->
 			set_pinvalue(Pin, 0),
@@ -131,8 +132,8 @@ pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=0}=Context) ->
 		set_pinvalue(Pin, 1),
 		pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=1})
 	end;
-pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, value=1}=Context) ->
-	{ok, T1} = maps:find(time1, Attr),
+pin_loop(Pin, #pin_context{mode=pwm, attribute=Attr, config=Conf, value=1}=Context) ->
+	{ok, T1} = maps:find(time1, Conf),
 	receive
 		{change_mode, From, NewMode, NewAttr} ->
 			set_pinvalue(Pin, 0),
