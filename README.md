@@ -22,29 +22,29 @@ Example
 So far, you can do things like:
 
   -module(testdrive).
-  
+
   -export([main/0]).
 
   main()->
-  	{ok, _PID} = rpi_gpio:init(),
-  	rpi_gpio:export(21),	% Export pin 21
-  	rpi_gpio:set_pinmode(21, bare),	% Set it to 'bare' mode.
-  	rpi_gpio:set_pinattr(21, [{direction, out}]),	% Set pin attributes
-  	loop(21).
-  
+    {ok, _PID} = rpi_gpio:init(),
+    rpi_gpio:export(21),	% Export pin 21
+    rpi_gpio:set_pinmode(21, bare),	% Set it to 'bare' mode.
+    rpi_gpio:set_pinattr(21, [{direction, out}]),	% Set pin attributes
+    loop(21).
+
   loop(Pin) ->
-  	loop(Pin, 1).
-  
+    loop(Pin, 1).
+
   loop(Pin, 0) ->
-  	rpi_gpio:write_pin(Pin, 1),	% 
-  	receive
-  	after 1000 ->
-  		loop(Pin, 1)
-  	end;
+    rpi_gpio:write_pin(Pin, 1),	% 
+    receive
+    after 1000 ->
+      loop(Pin, 1)
+    end;
   loop(Pin, 1) ->
-  	rpi_gpio:write_pin(Pin, 0),
-  	receive
-  	after 1000 ->
-  		loop(Pin, 0)
-  	end.
+    rpi_gpio:write_pin(Pin, 0),
+    receive
+    after 1000 ->
+      loop(Pin, 0)
+    end.
 
