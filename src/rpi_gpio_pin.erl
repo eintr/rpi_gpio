@@ -166,16 +166,17 @@ pin_loop_common_msg_handle(_Pin, Context, Msg) ->
 	end.
 
 update_attr(Pin, Map, []) ->
-	maps:fold(fun set_pinattrs/3, maps:put(pin_num, Pin, maps:new()), Map);
+	io:format("Set attr pin[~p] -> ~p~n", [Pin, Map]),
+	maps:fold(	fun (K, V, _AccIN) when is_integer(V) -> 
+				%io:format("~p <= ~p~n", [?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/"++atom_to_list(K), integer_to_list(V)]),
+				ok = file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/"++atom_to_list(K), integer_to_list(V));
+			(K, V, _AccIN) when is_atom(V) -> 
+				%io:format("~p <= ~p~n", [?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/"++atom_to_list(K), atom_to_list(V)]),
+				ok = file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/"++atom_to_list(K), atom_to_list(V)) end,
+	[], Map),
+	Map;
 update_attr(Pin, Map, [{K, V}|T]) ->
 	update_attr(Pin, maps:put(K, V, Map), T).
-
-set_pinattrs(K, V, AccIn) when is_integer(V)->
-	file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(maps:get(pin_num, AccIn))++atom_to_list(K), integer_to_list(V)),
-	maps:put(K, V, AccIn);
-set_pinattrs(K, V, AccIn) when is_atom(V)->
-	file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(maps:get(pin_num, AccIn))++atom_to_list(K), atom_to_list(V)),
-	maps:put(K, V, AccIn).
 
 set_pinvalue(Pin, 0) ->
 	ok = file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/value", "0");
