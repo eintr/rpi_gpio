@@ -105,12 +105,10 @@ pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) -
 			pin_loop(Pin, #pin_context{mode=bare, attribute=update_attr(Pin, Attr, NewAttr), value=OldValue});
 		{change_mode, From, NewMode} ->
 			io:format("Pin[~p]: {change_mode, ~p}\n", [Pin, NewMode]),
-			set_pinvalue(Pin, 0),
 			From ! ok,	% BUG: Racing!
 			pin_loop(Pin, #pin_context{mode=NewMode, attribute=Attr, value=0});
 		{change_mode, From, NewMode, NewAttr} ->
 			io:format("Pin[~p]: {change_mode, ~p, ~p}\n", [Pin, NewMode, NewAttr]),
-			set_pinvalue(Pin, 0),
 			From ! ok,	% BUG: Racing!
 			pin_loop(Pin, #pin_context{mode=NewMode, attribute=update_attr(Pin, Attr, NewAttr), value=0});
 		CommonMsg ->
