@@ -15,12 +15,14 @@ Usage
 - set_pinattr/2
 - read_pin/1
 - write_pin/2
-
+- watch_pin/2
+- unwatch_pin/1
 
 Example
 =======
 So far, you can do things like:
 
+```Erlang
   -module(testdrive).
 
   -export([main/0]).
@@ -47,4 +49,5 @@ So far, you can do things like:
     after 1000 ->
       loop(Pin, 0)
     end.
+```
 
