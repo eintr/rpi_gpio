@@ -172,9 +172,10 @@ update_attr(Map, []) ->
 update_attr(Map, [{K, V}|T]) ->
 	update_attr(maps:put(K, V, Map), T).
 
-set_pinvalue(Pin, Value) ->
-	{ok, IO} = file:open(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/value", [write]),
-	io:format(IO, "~p~n", [Value]).
+set_pinvalue(Pin, 0) ->
+	ok = file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/value", "0");
+set_pinvalue(Pin, _) ->
+	ok = file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/value", "1").
 
 cat_file(Path, Converter) ->
 	{ok, LineBin} = file:read_file(Path),
