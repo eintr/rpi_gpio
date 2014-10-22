@@ -73,8 +73,8 @@ pin_loop_start(Pin, Context) ->
 	process_flag(priority, high),
 	pin_loop(Pin, Context).
 
-%%% bear loop
-pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, value=OldValue}=Context) ->
+%%% bare loop
+pin_loop(Pin, #pin_context{mode=bare, attribute=Attr, config=Config, value=OldValue}=Context) ->
 	receive
 		{set_value, From, OldValue} ->
 			io:format("Pin[~p]: {set_value, ~p}\n", [Pin, OldValue]),
@@ -170,10 +170,10 @@ update_attr(Pin, Map, []) ->
 	io:format("Set attr pin[~p] -> ~p~n", [Pin, Map]),
 	maps:fold(	fun (K, V, _AccIN) when is_integer(V) -> 
 				%io:format("~p <= ~p~n", [?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/"++atom_to_list(K), integer_to_list(V)]),
-				ok = file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/"++atom_to_list(K), integer_to_list(V));
+				file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/"++atom_to_list(K), integer_to_list(V));
 			(K, V, _AccIN) when is_atom(V) -> 
 				%io:format("~p <= ~p~n", [?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/"++atom_to_list(K), atom_to_list(V)]),
-				ok = file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/"++atom_to_list(K), atom_to_list(V)) end,
+				file:write_file(?GPIO_PREFIX++"gpio"++integer_to_list(Pin)++"/"++atom_to_list(K), atom_to_list(V)) end,
 	[], Map),
 	Map;
 update_attr(Pin, Map, [{K, V}|T]) ->
