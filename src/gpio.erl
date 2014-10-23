@@ -1,4 +1,4 @@
--module(rpi_gpio).
+-module(gpio).
 
 -author("eintr<nhf0424@gmail.com>").
 

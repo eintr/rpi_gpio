@@ -1,4 +1,4 @@
-sources=rpi_gpio.erl rpi_gpio_pin.erl
+sources=gpio.erl gpio_pin.erl
 
 beams=$(sources:.erl=.beam)
 
@@ -9,8 +9,6 @@ all: $(beams)
 
 install: get-deps all
 	cp $(beams) ../dist/ebin/
-	cp titans_id_service ../dist/ebin/
-	cp titans_id_script ../dist/ebin/
 
 clean:
 	rm -f $(beams)
