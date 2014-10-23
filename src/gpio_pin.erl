@@ -96,6 +96,10 @@ pin_loop(Pin, bare, Context) ->
 					From ! {error, "Unknown error: No 'direction' value for pin."}
 			end,
 			pin_loop(Pin, bare, Context);
+		{get_attrs, From} ->
+			io:format("Pin[~p]: {get_attr}\n", [Pin]),
+			From ! Context,      % BUG: Racing!
+			pin_loop_start(Pin, bare, Context);
 		{set_attrs, From, NewAttrs} ->
 			io:format("Pin[~p]: {set_attr, ~p}\n", [Pin, NewAttrs]),
 			NewContext = update_attr(Pin, Context, NewAttrs),
@@ -116,6 +120,10 @@ pin_loop(Pin, pwm, Context) ->
 		{set0, _} ->
 			set_pinvalue(Pin, 0),
 			pin_loop(Pin, pwm, Context);
+		{get_attrs, From} ->
+			io:format("Pin[~p]: {get_attr}\n", [Pin]),
+			From ! Context,      % BUG: Racing!
+			pin_loop_start(Pin, bare, Context);
 		{set_attrs, From, NewAttrs} ->
 			io:format("Pin[~p]: {set_attr, ~p}\n", [Pin, NewAttrs]),
 			NewContext = update_attr(Pin, Context, NewAttrs),
